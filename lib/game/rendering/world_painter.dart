@@ -311,11 +311,11 @@ class WorldPainter extends CustomPainter {
     // Sockets: one per required thread, in order, showing its glyph.
     final required = level.winCondition.required;
     for (var i = 0; i < required.length; i++) {
-      final a = -math.pi / 2 + (i - (required.length - 1) / 2) * 0.75;
-      final sc = c + Offset(math.cos(a), math.sin(a)) * (r * 0.72);
+      final a = math.pi / 2 + ((required.length - 1) / 2 - i) * 0.5;
+      final sc = c + Offset(math.cos(a), math.sin(a)) * (r * 1.55);
       final done = session.isConnected(required[i]);
       final glyph = level.nodeById(required[i].first).glyph;
-      _paintSocket(canvas, sc, r * 0.16, glyph, done);
+      _paintSocket(canvas, sc, r * 0.22, glyph, done);
     }
   }
 

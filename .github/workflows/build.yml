@@ -71,6 +71,32 @@ jobs:
           name: world-on-a-thread-ios-unsigned-ipa
           path: world-on-a-thread-unsigned.ipa
 
+  # Publishes the builds as a GitHub Release so they download without a
+  # GitHub login: .../releases/latest/download/world-on-a-thread.apk
+  release:
+    needs: [android, ios]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp dist/world-on-a-thread-android-apk/app-release.apk world-on-a-thread.apk
+          cp dist/world-on-a-thread-ios-unsigned-ipa/world-on-a-thread-unsigned.ipa world-on-a-thread-unsigned.ipa
+          gh release create "build-${{ github.run_number }}" \
+            world-on-a-thread.apk world-on-a-thread-unsigned.ipa \
+            --repo "${{ github.repository }}" \
+            --target "${{ github.sha }}" \
+            --title "Сборка ${{ github.run_number }}" \
+            --notes "Автоматическая сборка из ${{ github.sha }}. APK ставится на Android; .ipa без подписи." \
+            --latest
+
   web:
     needs: test
     if: github.ref == 'refs/heads/main'

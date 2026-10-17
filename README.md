@@ -64,6 +64,22 @@ flutter build ios --release                 # или Product → Archive в Xcod
 звук играет после первого касания, переключатели «Музыка» и «Эффекты» работают
 раздельно, прогресс сохраняется после перезапуска приложения.
 
+## Сборка без Mac и без Android SDK (GitHub Actions)
+
+Файл `.github/workflows/build.yml` собирает всё в облаке GitHub при каждом push в `main`
+(или вручную: Actions → Build → Run workflow):
+
+- `test`: `flutter analyze` и `flutter test`;
+- `android`: APK (`world-on-a-thread-android-apk` в разделе Artifacts запуска). Скачать на телефон,
+  распаковать zip, открыть `app-release.apk`, разрешить установку из этого источника;
+- `ios`: сборка на macOS-машине GitHub без подписи, `.ipa` в Artifacts. Это доказывает, что
+  iOS-версия компилируется. Поставить её на iPhone без Mac можно через Sideloadly
+  (Windows) с бесплатным Apple ID, приложение работает 7 дней. Для TestFlight и App Store
+  нужен Apple Developer Program (99 $ в год), подписывать можно тоже в облаке (Codemagic или
+  GitHub Actions), Mac не нужен;
+- `web`: публикует игру на GitHub Pages (`https://<user>.github.io/<repo>/`). На iPhone её
+  можно открыть в Safari и добавить на экран «Домой».
+
 ## Архитектура
 
 ```

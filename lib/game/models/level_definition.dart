@@ -1,0 +1,61 @@
+import 'connection.dart';
+import 'level_visuals.dart';
+import 'puzzle_node.dart';
+import 'win_condition.dart';
+
+/// Static description of one puzzle. Adding a level means adding one of
+/// these to the catalog; the engine and the renderer never change.
+class LevelDefinition {
+  const LevelDefinition({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.nodes,
+    required this.allowedConnections,
+    required this.winCondition,
+    required this.visuals,
+    required this.hint,
+    this.animation = const LevelAnimation(),
+  });
+
+  final String id;
+  final String title;
+  final String subtitle;
+  final List<PuzzleNode> nodes;
+  final List<Connection> allowedConnections;
+  final WinCondition winCondition;
+  final LevelVisuals visuals;
+  final String hint;
+  final LevelAnimation animation;
+
+  PuzzleNode nodeById(String id) => nodes.firstWhere((n) => n.id == id);
+
+  bool hasNode(String id) => nodes.any((n) => n.id == id);
+
+  /// Returns a list of problems; empty means the level is well-formed.
+  List<String> validate() {
+    final problems = <String>[];
+    final ids = nodes.map((n) => n.id).toList();
+    if (ids.toSet().length != ids.length) problems.add('duplicate node ids');
+    for (final c in [...allowedConnections, ...winCondition.required]) {
+      if (!hasNode(c.first) || !hasNode(c.second)) {
+        problems.add('unknown node in $c');
+      }
+    }
+    if (allowedConnections.toSet().length != allowedConnections.length) {
+      problems.add('duplicate allowed connections');
+    }
+    for (final c in winCondition.required) {
+      if (!allowedConnections.contains(c)) {
+        problems.add('$c is required but not allowed');
+      }
+    }
+    if (winCondition.required.isEmpty) problems.add('nothing to solve');
+    for (final n in nodes) {
+      if (n.islandId != null && visuals.islandById(n.islandId) == null) {
+        problems.add('${n.id} references missing island ${n.islandId}');
+      }
+    }
+    return problems;
+  }
+}

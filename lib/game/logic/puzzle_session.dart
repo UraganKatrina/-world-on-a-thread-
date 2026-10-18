@@ -147,7 +147,7 @@ class PuzzleSession extends ChangeNotifier {
       notifyListeners();
       return ThreadUntied(connection);
     }
-    final reason = _rejectionFor(connection);
+    final reason = rejectionFor(connection);
     if (reason != null) {
       _rejections++;
       notifyListeners();
@@ -160,8 +160,8 @@ class PuzzleSession extends ChangeNotifier {
     return ThreadConnected(connection, solvedNow: _solved);
   }
 
-  /// The first rule [connection] breaks, or null when it may be made.
-  RejectReason? _rejectionFor(Connection connection) {
+  /// The first rule [connection] breaks, or null when it may be made now.
+  RejectReason? rejectionFor(Connection connection) {
     final rules = level.rules;
     if (_made.contains(connection)) return RejectReason.duplicate;
     if (!level.allowedConnections.contains(connection)) {

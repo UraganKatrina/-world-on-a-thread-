@@ -28,7 +28,9 @@ void main() {
     expect(catalog.nextAfter('no_tangles')?.id, 'lighthouse');
     expect(catalog.nextAfter('lighthouse')?.id, 'spool');
     expect(catalog.nextAfter('spool')?.id, 'moon_fork');
-    expect(catalog.nextAfter('moon_fork'), isNull);
+    expect(catalog.nextAfter('moon_fork')?.id, 'isle_008');
+    expect(catalog.levels, hasLength(100));
+    expect(catalog.nextAfter(catalog.levels.last.id), isNull);
     expect(catalog.nextAfter('missing'), isNull);
   });
 }

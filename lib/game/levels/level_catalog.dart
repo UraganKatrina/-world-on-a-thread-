@@ -2,6 +2,8 @@ import '../models/level_definition.dart';
 import 'awakening_level.dart';
 import 'constellation_level.dart';
 import 'first_light_level.dart';
+import 'generated/chapters.dart';
+import 'generated/generated_levels.g.dart';
 import 'lighthouse_level.dart';
 import 'moon_fork_level.dart';
 import 'no_tangles_level.dart';
@@ -22,6 +24,7 @@ class LevelCatalog {
     lighthouseLevel,
     spoolLevel,
     moonForkLevel,
+    ..._generatedLevels(),
   ]);
 
   final List<LevelDefinition> levels;
@@ -41,4 +44,16 @@ class LevelCatalog {
     if (i < 0 || i + 1 >= levels.length) return null;
     return levels[i + 1];
   }
+}
+
+/// Levels from `tool/level_generator`, numbered within their chapters.
+List<LevelDefinition> _generatedLevels() {
+  final counters = <int, int>{};
+  return [
+    for (final spec in generatedLevelSpecs)
+      buildGeneratedLevel(
+        spec,
+        counters.update(spec.chapter, (n) => n + 1, ifAbsent: () => 1),
+      ),
+  ];
 }

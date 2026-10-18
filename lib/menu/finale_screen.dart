@@ -37,7 +37,7 @@ class FinaleScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Это все уровни прототипа. Новые острова появятся в следующих версиях.',
+                        'Сто островов позади. Мир снова держится на нитях.',
                         style: Theme.of(context).textTheme.bodyLarge,
                         textAlign: TextAlign.center,
                       ),

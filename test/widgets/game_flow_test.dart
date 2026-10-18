@@ -151,7 +151,7 @@ void main() {
         find.bySemanticsLabel('Уровень 2, Созвездие, закрыт'),
         findsOneWidget,
       );
-      await tester.tap(find.text('Созвездие'));
+      await tester.tap(find.bySemanticsLabel('Уровень 2, Созвездие, закрыт'));
       await _settle(tester);
       expect(find.byType(PuzzleBoard), findsNothing);
     },

@@ -18,6 +18,7 @@ class LevelDefinition {
     required this.hint,
     this.rules = const PuzzleRules(),
     this.animation = const LevelAnimation(),
+    this.chapter = 0,
   });
 
   final String id;
@@ -30,6 +31,9 @@ class LevelDefinition {
   final String hint;
   final PuzzleRules rules;
   final LevelAnimation animation;
+
+  /// Chapter the level belongs to in the level list.
+  final int chapter;
 
   PuzzleNode nodeById(String id) => nodes.firstWhere((n) => n.id == id);
 

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:world_on_a_thread/game/levels/first_light_level.dart';
+import 'package:world_on_a_thread/game/levels/generated/generated_levels.g.dart';
 import 'package:world_on_a_thread/game/levels/level_catalog.dart';
 import 'package:world_on_a_thread/game/levels/lighthouse_level.dart';
 import 'package:world_on_a_thread/game/levels/moon_fork_level.dart';
@@ -139,8 +140,32 @@ void main() {
     });
   });
 
-  group('Every level can be finished', () {
-    for (final level in LevelCatalog.standard().levels) {
+  group('Generated levels', () {
+    final generated = LevelCatalog.standard().levels.skip(7).toList();
+    test('the stored answer of every generated level wins', () {
+      for (final spec in generatedLevelSpecs) {
+        final level = generated.firstWhere((l) => l.id == spec.id);
+        final s = PuzzleSession(level);
+        for (final key in spec.solution) {
+          final [a, b] = key.split('|');
+          expect(s.tryConnect(a, b), isA<ThreadConnected>(), reason: spec.id);
+        }
+        expect(s.isSolved, isTrue, reason: spec.id);
+        if (spec.budget != null) expect(s.threadsLeft, 0, reason: spec.id);
+      }
+    });
+
+    test('titles are unique and chapters only move forward', () {
+      final all = LevelCatalog.standard().levels;
+      expect(all.map((l) => l.title).toSet(), hasLength(all.length));
+      for (var i = 1; i < all.length; i++) {
+        expect(all[i].chapter, greaterThanOrEqualTo(all[i - 1].chapter));
+      }
+    });
+  });
+
+  group('Every hand-made level can be finished', () {
+    for (final level in LevelCatalog.standard().levels.take(7)) {
       test(level.title, () {
         final report = solveLevel(level);
         expect(report.solvable, isTrue, reason: level.id);

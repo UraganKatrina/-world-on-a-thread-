@@ -203,6 +203,7 @@ class _GameScreenState extends State<GameScreen> {
                           title: widget.level.title,
                           completed: _session.progressCount,
                           total: _session.goalCount,
+                          threadsLeft: _session.threadsLeft,
                           onPause: () => setState(() => _paused = true),
                           onRestart: _restart,
                         ),

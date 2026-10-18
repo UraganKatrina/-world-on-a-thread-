@@ -6,6 +6,7 @@ class PuzzleRules {
     this.forbidCrossing = false,
     this.lightSources = const {},
     this.allowUntie = false,
+    this.threadBudget,
   });
 
   /// How many threads may meet at one node; null means unlimited.
@@ -20,6 +21,10 @@ class PuzzleRules {
 
   /// Tapping both ends of an existing thread releases it.
   final bool allowUntie;
+
+  /// How many threads the spool holds for the whole level; null means
+  /// unlimited. Untying a thread returns it to the spool.
+  final int? threadBudget;
 
   bool get usesLight => lightSources.isNotEmpty;
 }

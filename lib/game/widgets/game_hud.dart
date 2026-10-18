@@ -11,11 +11,15 @@ class GameTopBar extends StatelessWidget {
     required this.total,
     required this.onPause,
     required this.onRestart,
+    this.threadsLeft,
   });
 
   final String title;
   final int completed;
   final int total;
+
+  /// Threads left on the spool; null hides the spool counter.
+  final int? threadsLeft;
   final VoidCallback onPause;
   final VoidCallback onRestart;
 
@@ -40,7 +44,16 @@ class GameTopBar extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
-                ProgressThreads(completed: completed, total: total),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ProgressThreads(completed: completed, total: total),
+                    if (threadsLeft case final left?) ...[
+                      const SizedBox(width: 14),
+                      SpoolCounter(left: left),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -99,6 +112,42 @@ class ProgressThreads extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Small spool with the number of threads still available.
+class SpoolCounter extends StatelessWidget {
+  const SpoolCounter({super.key, required this.left});
+
+  final int left;
+
+  @override
+  Widget build(BuildContext context) {
+    final empty = left <= 0;
+    final color = empty ? Palette.mist : Palette.softGold;
+    return Semantics(
+      label: 'В мотке осталось нитей: $left',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.7)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.all_inclusive_rounded, size: 13, color: color),
+            const SizedBox(width: 4),
+            Text(
+              '$left',
+              style: Theme.of(context).textTheme.labelMedium
+                  ?.copyWith(color: color, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }

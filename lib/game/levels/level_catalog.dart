@@ -3,7 +3,9 @@ import 'awakening_level.dart';
 import 'constellation_level.dart';
 import 'first_light_level.dart';
 import 'lighthouse_level.dart';
+import 'moon_fork_level.dart';
 import 'no_tangles_level.dart';
+import 'spool_level.dart';
 
 /// Ordered list of all levels. To add a level, create a [LevelDefinition]
 /// and append it here — no engine or UI changes are needed.
@@ -18,6 +20,8 @@ class LevelCatalog {
     firstLightLevel,
     noTanglesLevel,
     lighthouseLevel,
+    spoolLevel,
+    moonForkLevel,
   ]);
 
   final List<LevelDefinition> levels;

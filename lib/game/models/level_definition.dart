@@ -57,6 +57,8 @@ class LevelDefinition {
     for (final id in rules.lightSources) {
       if (!hasNode(id)) problems.add('unknown light source $id');
     }
+    final budget = rules.threadBudget;
+    if (budget != null && budget <= 0) problems.add('empty spool');
     final condition = winCondition;
     if (condition is LightTargetsCondition) {
       if (!rules.usesLight) problems.add('light targets without sources');

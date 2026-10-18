@@ -2,7 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:world_on_a_thread/game/levels/first_light_level.dart';
 import 'package:world_on_a_thread/game/levels/level_catalog.dart';
 import 'package:world_on_a_thread/game/levels/lighthouse_level.dart';
+import 'package:world_on_a_thread/game/levels/moon_fork_level.dart';
 import 'package:world_on_a_thread/game/levels/no_tangles_level.dart';
+import 'package:world_on_a_thread/game/levels/spool_level.dart';
 import 'package:world_on_a_thread/game/logic/puzzle_session.dart';
 import 'package:world_on_a_thread/game/logic/puzzle_solver.dart';
 import 'package:world_on_a_thread/game/logic/thread_geometry.dart';
@@ -99,6 +101,44 @@ void main() {
     });
   });
 
+  group('Spool («Моток»)', () {
+    test('the spool counts down and runs out', () {
+      final s = PuzzleSession(spoolLevel);
+      expect(s.threadsLeft, 4);
+      s.tryConnect('star', 'north_west');
+      s.tryConnect('north_west', 'west');
+      s.tryConnect('star', 'north_east');
+      s.tryConnect('north_east', 'east');
+      expect(s.threadsLeft, 0);
+      expect(s.isSolved, isFalse);
+      expect(
+        s.tryConnect('west', 'south'),
+        rejectedFor(RejectReason.spoolEmpty),
+      );
+    });
+
+    test('untying returns a thread to the spool', () {
+      final s = PuzzleSession(spoolLevel);
+      s.tryConnect('star', 'north_west');
+      expect(s.tryConnect('star', 'north_west'), isA<ThreadUntied>());
+      expect(s.threadsLeft, 4);
+    });
+
+    test('branching through the diamond wins within the spool', () {
+      final s = PuzzleSession(spoolLevel);
+      s.tryConnect('star', 'hub');
+      s.tryConnect('hub', 'west');
+      s.tryConnect('hub', 'east');
+      expect(s.tryConnect('hub', 'south'), isA<ThreadConnected>());
+      expect(s.isSolved, isTrue);
+      expect(s.threadsLeft, 0);
+    });
+
+    test('levels without a spool have no limit', () {
+      expect(PuzzleSession(firstLightLevel).threadsLeft, isNull);
+    });
+  });
+
   group('Every level can be finished', () {
     for (final level in LevelCatalog.standard().levels) {
       test(level.title, () {
@@ -115,6 +155,23 @@ void main() {
 
     test('«Без узелков» has exactly one way to pair the points', () {
       expect(solveLevel(noTanglesLevel).solutionCount, 1);
+    });
+
+    test('«Лунная развилка» needs exactly the full spool', () {
+      final report = solveLevel(moonForkLevel);
+      expect(report.shortest, hasLength(5));
+      expect(report.solutionCount, 3);
+      // Lighting both edges first leaves too little thread for the south.
+      final s = PuzzleSession(moonForkLevel);
+      s.tryConnect('moon', 'west_gate');
+      s.tryConnect('west_gate', 'west');
+      s.tryConnect('moon', 'east_gate');
+      s.tryConnect('east_gate', 'east');
+      expect(s.tryConnect('west', 'south_west'), isA<ThreadConnected>());
+      expect(
+        s.tryConnect('east', 'south_east'),
+        rejectedFor(RejectReason.spoolEmpty),
+      );
     });
 
     test('«Маяк» has dead ends: a wrong long thread blocks the south', () {

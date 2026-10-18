@@ -11,6 +11,8 @@ String rejectionMessage(RejectReason reason) => switch (reason) {
     'У этой точки уже есть нить. Чтобы отпустить её, коснись обоих её концов.',
   RejectReason.crossing => 'Нити не могут пересекаться. Поищи другой путь.',
   RejectReason.dark => 'Нить тянется только от светящейся точки.',
+  RejectReason.spoolEmpty =>
+    'Моток пуст. Отпусти одну из нитей, чтобы натянуть её в другом месте.',
 };
 
 const String connectedMessage = 'Нить натянулась.';

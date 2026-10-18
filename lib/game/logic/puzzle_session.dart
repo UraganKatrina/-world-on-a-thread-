@@ -25,6 +25,9 @@ enum RejectReason {
 
   /// Neither end glows yet, and threads only grow from light.
   dark,
+
+  /// The spool is empty: every thread the level allows is already in use.
+  spoolEmpty,
 }
 
 /// Result of a single tap on a node.
@@ -97,6 +100,12 @@ class PuzzleSession extends ChangeNotifier {
       : {
           for (final c in _made) ...[c.first, c.second],
         };
+
+  /// Threads still left on the spool, or null when the level has no limit.
+  int? get threadsLeft {
+    final budget = level.rules.threadBudget;
+    return budget == null ? null : budget - _made.length;
+  }
 
   int threadsAt(String nodeId) => _made.where((c) => c.involves(nodeId)).length;
 
@@ -176,6 +185,8 @@ class PuzzleSession extends ChangeNotifier {
     if (!level.winCondition.acceptsNext(connection, _made)) {
       return RejectReason.wrongOrder;
     }
+    final left = threadsLeft;
+    if (left != null && left <= 0) return RejectReason.spoolEmpty;
     return null;
   }
 

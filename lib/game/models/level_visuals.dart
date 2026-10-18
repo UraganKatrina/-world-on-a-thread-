@@ -33,6 +33,7 @@ class LevelVisuals {
     this.threadColor = const Color(0xFFFFE3A3),
     this.mechanismRadius = 0.075,
     this.portalSize = const Size(0.16, 0.2),
+    this.showGuides = false,
   });
 
   final Color skyTop;
@@ -44,6 +45,10 @@ class LevelVisuals {
   final Size portalSize;
   final Color accent;
   final Color threadColor;
+
+  /// Draw faint dotted paths for every allowed thread. Useful when signs
+  /// alone do not tell which points can be joined.
+  final bool showGuides;
 
   IslandSpec? islandById(String? id) {
     if (id == null) return null;

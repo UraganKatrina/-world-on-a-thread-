@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 import '../models/connection.dart';
 import '../models/level_definition.dart';
+import 'light.dart';
+import 'thread_geometry.dart';
 
 /// Why a thread could not be made. None of these are punished: the player
 /// simply gets a gentle explanation and may try again immediately.
@@ -14,6 +16,15 @@ enum RejectReason {
 
   /// The pair is right, but another thread has to come first.
   wrongOrder,
+
+  /// One of the nodes already holds as many threads as the level allows.
+  nodeBusy,
+
+  /// The new thread would cross an existing one.
+  crossing,
+
+  /// Neither end glows yet, and threads only grow from light.
+  dark,
 }
 
 /// Result of a single tap on a node.
@@ -34,6 +45,12 @@ class ThreadConnected extends TapOutcome {
   const ThreadConnected(this.connection, {required this.solvedNow});
   final Connection connection;
   final bool solvedNow;
+}
+
+/// An existing thread was released (levels with [PuzzleRules.allowUntie]).
+class ThreadUntied extends TapOutcome {
+  const ThreadUntied(this.connection);
+  final Connection connection;
 }
 
 class ThreadRejected extends TapOutcome {
@@ -67,22 +84,21 @@ class PuzzleSession extends ChangeNotifier {
   /// make the hint a little more noticeable, never to penalize.
   int get rejectionCount => _rejections;
 
-  int get requiredCount => level.winCondition.required.length;
-  int get completedRequiredCount =>
-      level.winCondition.required.where(_made.contains).length;
-  double get progress =>
-      requiredCount == 0 ? 0 : completedRequiredCount / requiredCount;
+  int get goalCount => level.winCondition.goal(level);
+  int get progressCount => level.winCondition.progress(_made, level);
+  double get progress => goalCount == 0 ? 0 : progressCount / goalCount;
 
   bool isConnected(Connection c) => _made.contains(c);
 
-  /// The required connection that should be made next, if the level is
-  /// sequential. Used by the hint and by the mechanism's sockets.
-  Connection? get nextRequired {
-    for (final c in level.winCondition.required) {
-      if (!_made.contains(c)) return c;
-    }
-    return null;
-  }
+  /// Nodes that glow. In levels without light sources every node that
+  /// holds a thread counts as glowing.
+  Set<String> get litNodeIds => level.rules.usesLight
+      ? litNodes(level.rules.lightSources, _made)
+      : {
+          for (final c in _made) ...[c.first, c.second],
+        };
+
+  int threadsAt(String nodeId) => _made.where((c) => c.involves(nodeId)).length;
 
   TapOutcome tapNode(String nodeId) {
     if (_solved || !level.hasNode(nodeId)) return const TapIgnored();
@@ -116,14 +132,13 @@ class PuzzleSession extends ChangeNotifier {
       return const TapIgnored();
     }
     final connection = Connection(a, b);
-    RejectReason? reason;
-    if (_made.contains(connection)) {
-      reason = RejectReason.duplicate;
-    } else if (!level.allowedConnections.contains(connection)) {
-      reason = RejectReason.notAllowed;
-    } else if (!level.winCondition.acceptsNext(connection, _made)) {
-      reason = RejectReason.wrongOrder;
+    final rules = level.rules;
+    if (_made.contains(connection) && rules.allowUntie) {
+      _made.remove(connection);
+      notifyListeners();
+      return ThreadUntied(connection);
     }
+    final reason = _rejectionFor(connection);
     if (reason != null) {
       _rejections++;
       notifyListeners();
@@ -131,9 +146,50 @@ class PuzzleSession extends ChangeNotifier {
     }
 
     _made.add(connection);
-    _solved = level.winCondition.isSatisfied(_made);
+    _solved = level.winCondition.isSatisfied(_made, level);
     notifyListeners();
     return ThreadConnected(connection, solvedNow: _solved);
+  }
+
+  /// The first rule [connection] breaks, or null when it may be made.
+  RejectReason? _rejectionFor(Connection connection) {
+    final rules = level.rules;
+    if (_made.contains(connection)) return RejectReason.duplicate;
+    if (!level.allowedConnections.contains(connection)) {
+      return RejectReason.notAllowed;
+    }
+    final max = rules.maxThreadsPerNode;
+    if (max != null &&
+        (threadsAt(connection.first) >= max ||
+            threadsAt(connection.second) >= max)) {
+      return RejectReason.nodeBusy;
+    }
+    if (rules.forbidCrossing && _crossesExisting(connection)) {
+      return RejectReason.crossing;
+    }
+    if (rules.usesLight) {
+      final lit = litNodeIds;
+      if (!lit.contains(connection.first) && !lit.contains(connection.second)) {
+        return RejectReason.dark;
+      }
+    }
+    if (!level.winCondition.acceptsNext(connection, _made)) {
+      return RejectReason.wrongOrder;
+    }
+    return null;
+  }
+
+  bool _crossesExisting(Connection c) {
+    final a = level.nodeById(c.first).position;
+    final b = level.nodeById(c.second).position;
+    return _made.any(
+      (t) => segmentsCross(
+        a,
+        b,
+        level.nodeById(t.first).position,
+        level.nodeById(t.second).position,
+      ),
+    );
   }
 
   void reset() {

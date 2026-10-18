@@ -1,6 +1,7 @@
 import 'connection.dart';
 import 'level_visuals.dart';
 import 'puzzle_node.dart';
+import 'puzzle_rules.dart';
 import 'win_condition.dart';
 
 /// Static description of one puzzle. Adding a level means adding one of
@@ -15,6 +16,7 @@ class LevelDefinition {
     required this.winCondition,
     required this.visuals,
     required this.hint,
+    this.rules = const PuzzleRules(),
     this.animation = const LevelAnimation(),
   });
 
@@ -26,6 +28,7 @@ class LevelDefinition {
   final WinCondition winCondition;
   final LevelVisuals visuals;
   final String hint;
+  final PuzzleRules rules;
   final LevelAnimation animation;
 
   PuzzleNode nodeById(String id) => nodes.firstWhere((n) => n.id == id);
@@ -50,7 +53,17 @@ class LevelDefinition {
         problems.add('$c is required but not allowed');
       }
     }
-    if (winCondition.required.isEmpty) problems.add('nothing to solve');
+    if (winCondition.goal(this) <= 0) problems.add('nothing to solve');
+    for (final id in rules.lightSources) {
+      if (!hasNode(id)) problems.add('unknown light source $id');
+    }
+    final condition = winCondition;
+    if (condition is LightTargetsCondition) {
+      if (!rules.usesLight) problems.add('light targets without sources');
+      for (final id in condition.targets) {
+        if (!hasNode(id)) problems.add('unknown light target $id');
+      }
+    }
     for (final n in nodes) {
       if (n.islandId != null && visuals.islandById(n.islandId) == null) {
         problems.add('${n.id} references missing island ${n.islandId}');

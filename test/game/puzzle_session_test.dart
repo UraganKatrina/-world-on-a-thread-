@@ -20,7 +20,7 @@ void main() {
       final r = s.tryConnect('west_circle', 'south_circle');
       expect(r, isA<ThreadConnected>());
       expect(s.connections, [Connection('west_circle', 'south_circle')]);
-      expect(s.completedRequiredCount, 1);
+      expect(s.progressCount, 1);
       expect(s.isSolved, isFalse);
     });
 
@@ -82,7 +82,13 @@ void main() {
         );
         expect(s.isSolved, isTrue);
         expect(s.progress, 1);
-        expect(awakeningLevel.winCondition.isSatisfied(s.connections), isTrue);
+        expect(
+          awakeningLevel.winCondition.isSatisfied(
+            s.connections,
+            awakeningLevel,
+          ),
+          isTrue,
+        );
       },
     );
 

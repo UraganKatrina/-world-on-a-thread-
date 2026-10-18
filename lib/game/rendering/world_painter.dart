@@ -54,12 +54,14 @@ class WorldPainter extends CustomPainter {
     for (final island in visuals.islands) {
       _paintIsland(canvas, g, island);
     }
+    if (visuals.showGuides) _paintGuides(canvas, g);
     _paintRejected(canvas, g);
+    final lit = session.litNodeIds;
     for (final c in session.connections) {
-      _paintThread(canvas, g, c);
+      _paintThread(canvas, g, c, lit: lit.contains(c.first));
     }
     for (final node in level.nodes) {
-      _paintNode(canvas, g, node.id);
+      _paintNode(canvas, g, node.id, lit: lit.contains(node.id));
     }
   }
 
@@ -308,14 +310,26 @@ class WorldPainter extends CustomPainter {
         )!,
     );
 
-    // Sockets: one per required thread, in order, showing its glyph.
-    final required = level.winCondition.required;
-    for (var i = 0; i < required.length; i++) {
-      final a = math.pi / 2 + ((required.length - 1) / 2 - i) * 0.5;
+    // Sockets: one per step of the goal, showing its glyph. When the goal
+    // names specific threads, each socket lights for its own thread.
+    final condition = level.winCondition;
+    final required = condition.required;
+    final goal = session.goalCount;
+    final done = session.progressCount;
+    final spread = goal > 4 ? 0.38 : 0.5;
+    for (var i = 0; i < goal; i++) {
+      final a = math.pi / 2 + ((goal - 1) / 2 - i) * spread;
       final sc = c + Offset(math.cos(a), math.sin(a)) * (r * 1.55);
-      final done = session.isConnected(required[i]);
-      final glyph = level.nodeById(required[i].first).glyph;
-      _paintSocket(canvas, sc, r * 0.22, glyph, done);
+      final isLit = required.length == goal
+          ? session.isConnected(required[i])
+          : i < done;
+      _paintSocket(
+        canvas,
+        sc,
+        r * 0.22,
+        condition.socketGlyph(level, i),
+        isLit,
+      );
     }
   }
 
@@ -443,7 +457,16 @@ class WorldPainter extends CustomPainter {
   Offset _nodeAt(BoardGeometry g, String id) =>
       g.nodeCenter(level, level.nodeById(id), clock.value, still: reduceMotion);
 
-  void _paintThread(Canvas canvas, BoardGeometry g, Connection c) {
+  /// Threads hang a little; in levels where crossings matter they are drawn
+  /// almost straight so what the player sees matches the rule.
+  double get _sag => level.rules.forbidCrossing ? 0.006 : 0.03;
+
+  void _paintThread(
+    Canvas canvas,
+    BoardGeometry g,
+    Connection c, {
+    required bool lit,
+  }) {
     final t = Curves.easeOutCubic.transform(
       _since(effects.threadStarted[c], level.animation.threadDraw),
     );
@@ -453,10 +476,22 @@ class WorldPainter extends CustomPainter {
     final sway = reduceMotion
         ? 0.0
         : math.sin(_seconds * 0.9 + a.dx * 0.01) * 3;
-    final path = _threadPath(a, b, g.scale(0.03) + sway);
+    final path = _threadPath(a, b, g.scale(_sag) + sway);
     final metric = path.computeMetrics().first;
     final partial = metric.extractPath(0, metric.length * t);
 
+    if (!lit) {
+      // A thread cut off from the light stays, but goes dim.
+      canvas.drawPath(
+        partial,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = 1.6
+          ..color = const Color(0x99CFC7F0),
+      );
+      return;
+    }
     canvas.drawPath(
       partial,
       Paint()
@@ -489,6 +524,29 @@ class WorldPainter extends CustomPainter {
     }
   }
 
+  /// Faint dotted paths showing where threads can go.
+  void _paintGuides(Canvas canvas, BoardGeometry g) {
+    final paint = Paint()
+      ..color = const Color(0x55E6DDFF)
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2;
+    for (final c in level.allowedConnections) {
+      if (session.isConnected(c)) continue;
+      final a = _nodeAt(g, c.first);
+      final b = _nodeAt(g, c.second);
+      final length = (b - a).distance;
+      final dir = (b - a) / length;
+      // Skip the part hidden under the nodes themselves.
+      for (
+        var d = g.nodeRadius * 1.6;
+        d < length - g.nodeRadius * 1.6;
+        d += 9
+      ) {
+        canvas.drawCircle(a + dir * d, 0.9, paint);
+      }
+    }
+  }
+
   void _paintRejected(Canvas canvas, BoardGeometry g) {
     final c = effects.rejected;
     if (c == null) return;
@@ -517,11 +575,17 @@ class WorldPainter extends CustomPainter {
 
   // ---------------------------------------------------------------- nodes
 
-  void _paintNode(Canvas canvas, BoardGeometry g, String id) {
+  void _paintNode(
+    Canvas canvas,
+    BoardGeometry g,
+    String id, {
+    required bool lit,
+  }) {
     final node = level.nodeById(id);
     final c = _nodeAt(g, id);
     final r = g.nodeRadius;
-    final connected = session.connections.any((x) => x.involves(id));
+    final connected = lit;
+    final isSource = level.rules.lightSources.contains(id);
     final selected = session.selectedNodeId == id;
     final flashStart = effects.nodeFlashed[id];
     final flash = 1 - _since(flashStart, level.animation.nodeFlash);
@@ -561,6 +625,20 @@ class WorldPainter extends CustomPainter {
               : [const Color(0xFFF4F0FF), const Color(0xFF9A8FE0)],
         ).createShader(Rect.fromCircle(center: c, radius: r)),
     );
+
+    if (isSource) {
+      // Sources radiate softly so the player knows where light begins.
+      final rays = Paint()
+        ..strokeWidth = 1.4
+        ..strokeCap = StrokeCap.round
+        ..color = visuals.threadColor.withValues(alpha: 0.75);
+      final turn = _seconds * 0.3;
+      for (var i = 0; i < 8; i++) {
+        final a = turn + i * math.pi / 4;
+        final dir = Offset(math.cos(a), math.sin(a));
+        canvas.drawLine(c + dir * (r * 1.35), c + dir * (r * 1.85), rays);
+      }
+    }
 
     GlyphPainter.paint(
       canvas,

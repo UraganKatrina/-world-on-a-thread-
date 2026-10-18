@@ -1,6 +1,9 @@
 import '../models/level_definition.dart';
 import 'awakening_level.dart';
 import 'constellation_level.dart';
+import 'first_light_level.dart';
+import 'lighthouse_level.dart';
+import 'no_tangles_level.dart';
 
 /// Ordered list of all levels. To add a level, create a [LevelDefinition]
 /// and append it here — no engine or UI changes are needed.
@@ -9,8 +12,13 @@ class LevelCatalog {
     : assert(levels.isNotEmpty),
       assert(levels.map((l) => l.id).toSet().length == levels.length);
 
-  factory LevelCatalog.standard() =>
-      LevelCatalog([awakeningLevel, constellationLevel]);
+  factory LevelCatalog.standard() => LevelCatalog([
+    awakeningLevel,
+    constellationLevel,
+    firstLightLevel,
+    noTanglesLevel,
+    lighthouseLevel,
+  ]);
 
   final List<LevelDefinition> levels;
 

@@ -23,7 +23,10 @@ void main() {
 
   test('level transitions follow catalog order', () {
     expect(catalog.nextAfter('awakening')?.id, 'constellation');
-    expect(catalog.nextAfter('constellation'), isNull);
+    expect(catalog.nextAfter('constellation')?.id, 'first_light');
+    expect(catalog.nextAfter('first_light')?.id, 'no_tangles');
+    expect(catalog.nextAfter('no_tangles')?.id, 'lighthouse');
+    expect(catalog.nextAfter('lighthouse'), isNull);
     expect(catalog.nextAfter('missing'), isNull);
   });
 }

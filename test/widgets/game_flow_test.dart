@@ -81,7 +81,7 @@ void main() {
         await _tapNode(tester, 'south_circle');
         await _tapNode(tester, 'south_triangle');
         await _tapNode(tester, 'east_triangle');
-        expect(_session(tester).completedRequiredCount, 2);
+        expect(_session(tester).progressCount, 2);
 
         // Restart in the middle of the puzzle.
         await tester.tap(find.byTooltip('Начать заново'));

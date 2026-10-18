@@ -96,6 +96,9 @@ class _GameScreenState extends State<GameScreen> {
           solvedNow ? solvedMessage : connectedMessage,
           hold: const Duration(seconds: 2),
         );
+      case ThreadUntied():
+        audio.playEffect(SoundEffect.select);
+        _say(untiedMessage, hold: const Duration(seconds: 2));
       case ThreadRejected(:final reason):
         audio.playEffect(SoundEffect.reject);
         _say(rejectionMessage(reason));
@@ -198,8 +201,8 @@ class _GameScreenState extends State<GameScreen> {
                         listenable: _session,
                         builder: (context, _) => GameTopBar(
                           title: widget.level.title,
-                          completed: _session.completedRequiredCount,
-                          total: _session.requiredCount,
+                          completed: _session.progressCount,
+                          total: _session.goalCount,
                           onPause: () => setState(() => _paused = true),
                           onRestart: _restart,
                         ),

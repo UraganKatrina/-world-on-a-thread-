@@ -108,7 +108,9 @@ class _PuzzleBoardState extends State<PuzzleBoard>
               ? now
               : now + widget.session.level.animation.threadDraw;
         }
-      case ThreadRejected(:final connection):
+      // A released thread falls away like a rejected one.
+      case ThreadRejected(:final connection) || ThreadUntied(:final connection):
+        fx.threadStarted.remove(connection);
         fx.rejected = connection;
         fx.rejectedAt = now;
       case SelectionCleared() || TapIgnored():
@@ -133,7 +135,7 @@ class _PuzzleBoardState extends State<PuzzleBoard>
         return Semantics(
           label:
               'Игровое поле «${s.level.title}». Натянуто нитей: '
-              '${s.completedRequiredCount} из ${s.requiredCount}.',
+              '${s.progressCount} из ${s.goalCount}.',
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTapUp: (d) => _handleTap(d.localPosition, size),

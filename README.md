@@ -48,9 +48,10 @@ flutter install                     # или: adb install build/app/outputs/flut
 flutter build appbundle --release   # AAB для Google Play
 ```
 
-Для публикации нужно создать ключ подписи и `android/key.properties`
-(см. https://docs.flutter.dev/deployment/android). Сейчас release-сборка
-подписывается debug-ключом, как в шаблоне Flutter. Application id:
+Тестовые сборки подписаны открытым прототипным ключом
+(`android/app/prototype-signing/`), поэтому новая версия ставится поверх старой.
+Для Google Play нужен свой закрытый ключ и `android/key.properties`
+(см. https://docs.flutter.dev/deployment/android); если файл есть, сборка берёт его. Application id:
 `com.worldonathread.world_on_a_thread`; поменяйте его до публикации, если нужен другой.
 
 ## iOS (macOS + Xcode)
@@ -121,6 +122,11 @@ test/                       логика, каталог уровней, сох�
    (`SequenceCondition` или `AllConnectionsCondition`), острова, подсказка.
 2. Добавить его в `LevelCatalog.standard()`.
 3. `flutter test`: тест каталога проверит, что уровень корректен.
+
+## Иконка и экран запуска
+
+Иконка нарисована скриптом `tool/draw_icon.py` (Pillow). Пересоздать всё:
+`python3 tool/draw_icon.py && dart run flutter_launcher_icons && dart run flutter_native_splash:create`.
 
 ## Звук
 

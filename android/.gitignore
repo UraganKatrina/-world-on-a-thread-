@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Public signing key for test builds only (see app/prototype-signing/README.md).
+!app/prototype-signing/prototype.jks

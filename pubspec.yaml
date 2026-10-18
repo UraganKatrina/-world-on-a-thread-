@@ -47,6 +47,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -89,3 +91,28 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# App icon: python3 tool/draw_icon.py && dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/branding/icon.png
+  adaptive_icon_background: assets/branding/icon_background.png
+  adaptive_icon_foreground: assets/branding/icon_foreground.png
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: assets/branding/icon.png
+    background_color: "#0E1236"
+    theme_color: "#0E1236"
+
+# Launch screen: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#0E1236"
+  image: assets/branding/splash.png
+  android_12:
+    color: "#0E1236"
+    image: assets/branding/icon_foreground.png
+  web: true
+  # The splash tool rewrites the manifest; keep the game in portrait.
+  android_screen_orientation: portrait
